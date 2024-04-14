@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Input Form with Chart</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        canvas {
+            display: block;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Simple Input Form with Chart</h2>
+    <form id="inputForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="age">Current Age:</label>
+        <input type="number" id="age" name="age" required>
+        <input type="submit" value="Submit">
+    </form>
+    
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.getElementById('inputForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var name = document.getElementById('name').value;
+            var currentAge = parseInt(document.getElementById('age').value);
+            console.log("Name:", name);
+            console.log("Current Age:", currentAge);
+            var ageData = [];
+            for (var i = 0; i <= 10; i++) {
+                ageData.push(currentAge + i);
+            }
+            updateChart(name, currentAge, ageData);
+        });
+
+        function updateChart(name, currentAge, ageData) {
+            var currentYear = new Date().getFullYear();
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var labels = Array.from({ length: ageData.length }, (_, i) => currentYear + i);
+            var data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Age',
+                    data: ageData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            };
+            var options = {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            };
+            
+            // Check if myChart exists and is an instance of Chart.js
+            if(window.myChart instanceof Chart){
+                window.myChart.destroy(); // Destroy the existing chart
+            }
+            
+            // Create a new chart instance
+            window.myChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: options
+            });
+        }
+    </script>
+</body>
+</html>
