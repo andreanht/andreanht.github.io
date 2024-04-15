@@ -46,8 +46,8 @@
     <form id="inputForm">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required>
-        <label for="age">Current Age:</label>
-        <input type="number" id="age" name="age" required>
+        <label for="height">Height (cm):</label> <!-- Add height field -->
+        <input type="number" id="height" name="height" required> <!-- Add height field -->
         <input type="submit" value="Submit">
     </form>
     
@@ -56,52 +56,77 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.getElementById('inputForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var name = document.getElementById('name').value;
-            var currentAge = parseInt(document.getElementById('age').value);
-            console.log("Name:", name);
-            console.log("Current Age:", currentAge);
-            var ageData = [];
-            for (var i = 0; i <= 10; i++) {
-                ageData.push(currentAge + i);
-            }
-            updateChart(name, currentAge, ageData);
-        });
-
-        function updateChart(name, currentAge, ageData) {
-            var currentYear = new Date().getFullYear();
-            var ctx = document.getElementById('myChart').getContext('2d');
-            var labels = Array.from({ length: ageData.length }, (_, i) => currentYear + i);
-            var data = {
-                labels: labels,
-                datasets: [{
-                    label: 'Age',
-                    data: ageData,
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            };
-            var options = {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            };
-            
-            // Check if myChart exists and is an instance of Chart.js
-            if(window.myChart instanceof Chart){
-                window.myChart.destroy(); // Destroy the existing chart
-            }
-            
-            // Create a new chart instance
-            window.myChart = new Chart(ctx, {
-                type: 'line',
-                data: data,
-                options: options
-            });
+        event.preventDefault();
+        var name = document.getElementById('name').value;
+        var height = parseInt(document.getElementById('height').value); // Get initial height value
+        console.log("Name:", name);
+        console.log("Initial Height:", height); // Log initial height value
+        var currentYear = new Date().getFullYear();
+        var heightData1 = [];
+        var heightData2 = [];
+        var heightData3 = [];
+        for (var i = 1; i <= 11; i++) {
+            heightData1.push(height + i); // Increment height by 1 for each year
+            heightData2.push(height + 2 * i); // Increment height by 2 for each year
+            heightData3.push(height + 3 * i); // Increment height by 3 for each year
         }
+        updateChart(name, currentYear, heightData1, heightData2, heightData3);
+    });
+
+    function updateChart(name, currentYear, heightData1, heightData2, heightData3) {
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var data = {
+            labels: Array.from({ length: heightData1.length }, (_, i) => currentYear + i),
+            datasets: [{
+                label: 'Min', // Label for height increment of 1
+                data: heightData1, // Use height data with increment of 1
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Avg', // Label for height increment of 2
+                data: heightData2, // Use height data with increment of 2
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Max', // Label for height increment of 3
+                data: heightData3, // Use height data with increment of 3
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+        
+        var options = {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Year' // X-axis label
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Height (cm)' // Y-axis label
+                    },
+                    beginAtZero: false // Allow non-zero start for y-axis
+                }
+            }
+        };
+
+        if(window.myChart instanceof Chart){
+            window.myChart.destroy(); // Destroy the existing chart
+        }
+
+        // Create a new chart instance
+        window.myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: options
+        });
+    }
     </script>
 </body>
 </html>
