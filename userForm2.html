@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <title>User Form</title>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        padding: 20px;
+      }
+      .lbl2Left {
+        min-width: 110px;
+        padding-left: 15px;
+      }
+      .lbl2Right {
+        min-width: 150px;
+        padding-left: 15px;
+      }
+      .bold-text {
+        font-weight: bold;
+      }
+      .input-disabled {
+        background-color: #fff !important;
+      }
+    </style>
+  </head>
+  <body class="container mt-5">
+    <div class="row align-items-end">
+      <div class="col-md-4">
+        <div class="col-md-10">
+          <img src="resource/logo.png" class="img-fluid" alt="Prospine" />
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h1>Growth Taller Form</h1>
+      </div>
+    </div>
+
+    <div id="userForm" class="row">
+      <div class="col-md-6">
+        <h3>New Customer</h3>
+        <form id="inputForm" class="mb-4">
+          <input type="hidden" id="userId" name="userId" />
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label for="name">Name:</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                class="form-control"
+                maxlength="40"
+                required
+              />
+            </div>
+            <div class="form-group col-md-4">
+              <label for="dob">Date of Birth:</label>
+              <input
+                type="date"
+                id="dob"
+                name="dob"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="phone">Phone No.:</label>
+              <input
+                type="number"
+                id="phone"
+                name="phone"
+                class="form-control"
+                min="999999999"
+                max="9999999999999"
+                required
+              />
+            </div>
+            <div class="form-group col-md-3">
+              <label for="gender">Gender:</label>
+              <select id="gender" name="gender" class="form-control" required>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label for="height">Height (cm):</label>
+              <input
+                type="number"
+                id="height"
+                name="height"
+                class="form-control"
+                min="1"
+                max="999"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="dadHeight">Dad Height (cm):</label>
+              <input
+                type="number"
+                id="dadHeight"
+                name="dadHeight"
+                class="form-control"
+                min="1"
+                max="999"
+                required
+              />
+            </div>
+            <div class="form-group col-md-6">
+              <label for="momHeight">Mom Height (cm):</label>
+              <input
+                type="number"
+                id="momHeight"
+                name="momHeight"
+                class="form-control"
+                min="1"
+                max="999"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <button
+              type="button"
+              id="generate"
+              name="generate"
+              class="btn btn-primary"
+            >
+              Generate Chart
+            </button>
+          </div>
+          <div class="form-group">
+            <label for="notes">Notes:</label>
+            <textarea
+              id="notes"
+              name="notes"
+              class="form-control"
+              rows="9"
+              maxlength="560"
+              wrap="hard"
+              style="resize: none"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            Save Customer Data
+          </button>
+          <button type="button" class="btn btn-secondary" id="goBackButton">
+            Go Back
+          </button>
+        </form>
+      </div>
+      <div class="col-md-6">
+        <form id="progressForm" class="form-inline mb-4">
+          <div class="form-group">
+            <label for="progressHeight">Progress Height (cm):</label>
+            <input
+              type="number"
+              id="progressHeight"
+              name="progressHeight"
+              class="form-control mx-sm-2"
+              required
+            />
+          </div>
+          <button type="button" id="saveProgress" class="btn btn-primary">
+            Submit
+          </button>
+        </form>
+        <div>
+          <label for="chart">Potential Growth</label>
+        </div>
+        <div class="border p-3">
+          <canvas id="myChart" width="400" height="400"></canvas>
+        </div>
+        <div class="mt-3">
+          <button id="resetZoom" class="btn btn-secondary">Reset Zoom</button>
+          <button id="saveToPDF" class="btn btn-secondary">Save to PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // const host = "https://prospine.id:8443";
+      const host = "http://localhost:8585";
+
+      const chartOptions = {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Age", // X-axis label
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "Height (cm)", // Y-axis label
+            },
+            beginAtZero: false, // Allow non-zero start for y-axis
+          },
+        },
+        plugins: {
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: "xy",
+            },
+            zoom: {
+              wheel: {
+                enabled: true,
+              },
+              mode: "xy",
+            },
+          },
+        },
+        elements: {
+          line: {
+            tension: 0.4,
+          },
+        },
+        devicePixelRatio: 2,
+      };
+
+      $(document).ready(function () {
+        var urlParams = new URLSearchParams(window.location.search);
+        var userId = urlParams.get("id");
+
+        const progressForm = document.getElementById("progressForm");
+        if (userId) {
+          // Edit user scenario
+          $("#formTitle").text("Edit User");
+
+          // Fetch the user details and populate the form
+          $.ajax({
+            type: "GET",
+            url: `${host}/userById`,
+            data: { id: userId },
+            success: async function (data) {
+              $("#userId").val(data.id);
+              $("#name").val(data.name);
+              $("#dob").val(data.dateOfBirth);
+              $("#phone").val(data.phone);
+              $("#gender").val(data.gender);
+              $("#height").val(data.height);
+              $("#dadHeight").val(data.dadHeight);
+              $("#momHeight").val(data.momHeight);
+              $("#notes").val(data.notes);
+
+              var ages = [];
+              var heightDataMin = [];
+              var heightDataAvg = [];
+              var heightDataMax = [];
+
+              await fetch(
+                `${host}/calculateGrowth?dadHeight=${data.dadHeight}&momHeight=${data.momHeight}&gender=${data.gender}`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                }
+              )
+                .then((response) => response.json())
+                .then((progressData) => {
+                  console.log("Success calculateGrowth: ", progressData);
+                  for (var i = 0; i < progressData.length; i++) {
+                    ages.push(progressData[i].age.toString());
+                    heightDataMin.push(progressData[i].minHeight);
+                    heightDataAvg.push(progressData[i].avgHeight);
+                    heightDataMax.push(progressData[i].maxHeight);
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+
+              await updateChart(
+                ages,
+                heightDataMin,
+                heightDataAvg,
+                heightDataMax
+              );
+            },
+            error: function () {
+              alert("Error fetching user details");
+            },
+          });
+        } else {
+          progressForm.style.display = "none";
+        }
+
+        $("#userForm").submit(function (event) {
+          event.preventDefault();
+          console.log("submit here");
+          var dob = $("#dob").val();
+          console.log("dob here", dob);
+
+          var formData = {
+            name: $("#name").val(),
+            dateOfBirth: dob,
+            age: calculateAge(dob),
+            phone: $("#phone").val(),
+            gender: $("#gender").val(),
+            height: $("#height").val(),
+            dadHeight: $("#dadHeight").val(),
+            momHeight: $("#momHeight").val(),
+            notes: $("#notes").val(),
+          };
+
+          var ajaxUrl = userId
+            ? `${host}/submitFormData/${userId}`
+            : `${host}/submitFormData`;
+          var ajaxMethod = userId ? "PUT" : "POST";
+
+          $.ajax({
+            type: ajaxMethod,
+            url: ajaxUrl,
+            data: JSON.stringify(formData),
+            contentType: "application/json",
+            success: function () {
+              alert("User " + (userId ? "updated" : "added") + " successfully");
+              //   window.location.href = "index.html";
+            },
+            error: function () {
+              alert("Error " + (userId ? "updating" : "adding") + " user");
+            },
+          });
+        });
+      });
+
+      function calculateAge(dob) {
+        const dobDate = new Date(dob);
+        const today = new Date();
+        var age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+        console.log("age ", age);
+
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < dobDate.getDate())
+        ) {
+          age--;
+          console.log("reduce age ", age);
+        }
+
+        return age;
+      }
+
+      $("#goBackButton").click(function () {
+        window.location.href = "index.html";
+      });
+
+      document
+        .getElementById("generate")
+        .addEventListener("click", async function (event) {
+          event.preventDefault();
+          var height = document.getElementById("height").value;
+          var dob = document.getElementById("dob").value;
+          var gender = document.getElementById("gender").value;
+          var dadHeight = parseInt(document.getElementById("dadHeight").value);
+          var momHeight = parseInt(document.getElementById("momHeight").value);
+          var age = calculateAge(dob);
+
+          var ages = [];
+          var heightDataMin = [];
+          var heightDataAvg = [];
+          var heightDataMax = [];
+          var initialHeightData = [];
+
+          await fetch(
+            `${host}/calculateGrowth?dadHeight=${dadHeight}&momHeight=${momHeight}&gender=${gender}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Success calculateGrowth: ", data);
+              for (var i = 0; i < data.length; i++) {
+                ages.push(data[i].age.toString());
+                heightDataMin.push(data[i].minHeight);
+                heightDataAvg.push(data[i].avgHeight);
+                heightDataMax.push(data[i].maxHeight);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+
+          await updateChart(ages, heightDataMin, heightDataAvg, heightDataMax);
+        });
+
+      async function updateChart(
+        ages,
+        heightDataMin,
+        heightDataAvg,
+        heightDataMax
+      ) {
+        var ctx = document.getElementById("myChart").getContext("2d");
+
+        var heightProgress = [];
+        var userId = $("#userId").val();
+        if (userId) {
+          await fetch(`${host}/userProgressById?userId=${userId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Success get user progress: ", data);
+              for (var i = 0; i < data.length; i++) {
+                var progress = {
+                  height: data[i].height,
+                  date: data[i].recordDate,
+                };
+                heightProgress.push(progress);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        }
+        console.log("heightProgress: ", heightProgress);
+
+        var initialHeight = document.getElementById("height").value;
+        var dob = document.getElementById("dob").value;
+        var age = calculateAge(dob);
+        var firstProgressYear =
+          heightProgress.length > 0
+            ? new Date(heightProgress[0].date).getFullYear()
+            : 0;
+
+        var labels = [];
+        var data1 = [];
+        var data2 = [];
+        var data3 = [];
+        var dataProgress = [];
+        var progressPoint = true;
+
+        for (var i = 0; i < heightDataMin.length; i++) {
+          labels.push(ages[i]);
+          data1.push(heightDataMin[i]);
+          data2.push(heightDataAvg[i]);
+          data3.push(heightDataMax[i]);
+
+          if (Number(ages[i]) == Number(age)) {
+            dataProgress.push(initialHeight);
+            console.log("initial height", initialHeight);
+          } else {
+            dataProgress.push("NaN");
+          }
+
+          for (var j = 0; j < heightProgress.length; j++) {
+            var progressYear = new Date(heightProgress[j].date).getFullYear();
+            var yearDiff = progressYear - firstProgressYear;
+            var progressAge = yearDiff + Number(age);
+
+            if (Number(ages[i]) === progressAge) {
+              console.log("age tally with year");
+              dataProgress.push(heightProgress[j].height);
+
+              // labels.push(heightProgress[j].date);
+              labels.push("");
+              data1.push("NaN");
+              data2.push("NaN");
+              data3.push("NaN");
+
+              progressPoint = false;
+            }
+          }
+        }
+        console.log("dataProgress", dataProgress);
+
+        var data = {
+          labels: labels,
+          datasets: [
+            {
+              label: "Min",
+              data: data1,
+              backgroundColor: "rgba(54, 162, 235, 0.2)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1,
+              spanGaps: true,
+              pointStyle: false,
+            },
+            {
+              label: "Avg",
+              data: data2,
+              backgroundColor: "rgba(204, 153, 255, 0.2)",
+              borderColor: "rgba(204, 153, 255, 1)",
+              borderWidth: 1,
+              spanGaps: true,
+              pointStyle: false,
+            },
+            {
+              label: "Max",
+              data: data3,
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+              spanGaps: true,
+              pointStyle: false,
+            },
+            {
+              label: "Height",
+              data: dataProgress,
+              backgroundColor: "rgba(255, 99, 132, 0.2)",
+              borderColor: "rgba(255, 99, 132, 1)",
+              borderWidth: 2,
+              spanGaps: true,
+              pointStyle: progressPoint,
+            },
+          ],
+        };
+
+        if (window.myChart instanceof Chart) {
+          window.myChart.destroy(); // Destroy the existing chart
+        }
+
+        // Create a new chart instance
+        window.myChart = new Chart(ctx, {
+          type: "line",
+          data: data,
+          options: chartOptions,
+        });
+      }
+
+      document
+        .getElementById("saveProgress")
+        .addEventListener("click", async function (event) {
+          event.preventDefault();
+
+          var ages = [];
+          var heightDataMin = [];
+          var heightDataAvg = [];
+          var heightDataMax = [];
+
+          var userId = document.getElementById("userId").value;
+          var name = document.getElementById("name").value;
+          var phone = document.getElementById("phone").value;
+          var updatedHeight = parseInt(
+            document.getElementById("progressHeight").value
+          );
+          var dadHeight = document.getElementById("dadHeight").value;
+          var momHeight = document.getElementById("momHeight").value;
+          var gender = document.getElementById("gender").value;
+          var recordDate = formatDate(new Date());
+
+          if (
+            !userId ||
+            !name ||
+            !phone ||
+            !updatedHeight ||
+            !dadHeight ||
+            !momHeight ||
+            !gender
+          ) {
+            alert("Forms cannot be empty.");
+            return;
+          }
+
+          await fetch(`${host}/userProgress`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: userId,
+              height: updatedHeight,
+              recordDate: recordDate,
+            }),
+          })
+            .then((response) => {
+              console.log("Success");
+              alert("Updated user height progress.");
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Failed to update user height progress.");
+            });
+
+          await fetch(
+            `${host}/calculateGrowth?dadHeight=${dadHeight}&momHeight=${momHeight}&gender=${gender}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Success calculateGrowth: ", data);
+              for (var i = 0; i < data.length; i++) {
+                ages.push(data[i].age.toString());
+                heightDataMin.push(data[i].minHeight);
+                heightDataAvg.push(data[i].avgHeight);
+                heightDataMax.push(data[i].maxHeight);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+
+          await updateChart(ages, heightDataMin, heightDataAvg, heightDataMax);
+        });
+
+      function formatDate(date) {
+        var d = new Date(date),
+          month = "" + (d.getMonth() + 1),
+          day = "" + d.getDate(),
+          year = d.getFullYear();
+
+        if (month.length < 2) month = "0" + month;
+        if (day.length < 2) day = "0" + day;
+
+        return [year, month, day].join("-");
+      }
+
+      document
+        .getElementById("saveToPDF")
+        .addEventListener("click", function () {
+          // Get form data
+          var name = document.getElementById("name").value;
+          var dob = document.getElementById("dob").value;
+          var phone = document.getElementById("phone").value;
+          var height = parseInt(document.getElementById("height").value);
+          var gender = document.getElementById("gender").value;
+          var dadHeight = parseInt(document.getElementById("dadHeight").value);
+          var momHeight = parseInt(document.getElementById("momHeight").value);
+          var notes = document.getElementById("notes").value;
+          var age = calculateAge(dob);
+
+          if (!name || !dob || !phone || !dadHeight || !momHeight || !gender) {
+            alert("Form fields can't be empty");
+            return;
+          }
+
+          var userData = {
+            name,
+            dob,
+            age,
+            phone,
+            height,
+            gender,
+            dadHeight,
+            momHeight,
+            notes,
+          };
+
+          // Get chart data
+          let canvas = document.getElementById("myChart");
+
+          // Generate PDF
+          generatePdf(userData, canvas);
+        });
+
+      function generatePdf(userData, canvas) {
+        var newCanvas = canvas.cloneNode(true);
+        var ctx = newCanvas.getContext("2d");
+
+        // Create linear gradient
+        const grad = ctx.createLinearGradient(0, 0, newCanvas.width, 0);
+        grad.addColorStop(0, "#b7f4ae");
+        grad.addColorStop(1, "#eafcd2");
+
+        // ctx.fillStyle = "#d8f8c6";
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+        const chartDataUrl = newCanvas.toDataURL("image/jpeg");
+
+        var pdf = new jspdf.jsPDF("p", "mm", "a5");
+
+        function drawTextWithRect(text, x, y, width) {
+          pdf.setFont(undefined, "normal").text(text, x + 1, y);
+          // pdf.setFont(undefined, "normal").text(text, x + 1, y + 5);
+          // pdf.rect(x, y, width, 7);
+        }
+
+        var logo = new Image();
+        logo.src = "resource/logo.png";
+        pdf.addImage(logo, "PNG", 5, 4, 25, 10);
+
+        pdf
+          .setFont(undefined, "bold")
+          .setFontSize(14)
+          .text("GROWTH TALLER RESULT", 40, 10);
+
+        pdf.setFontSize(11);
+
+        var initY = 18;
+        var lineDiff = 6;
+
+        function getY(lineNo) {
+          return initY + lineDiff * lineNo;
+        }
+
+        var lineY = getY(1);
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Name`, 10, lineY)
+          .text(`:`, 35, lineY);
+        drawTextWithRect(`${userData.name}`, 37, lineY, 62);
+
+        lineY = getY(2);
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Age`, 10, lineY)
+          .text(`:`, 35, lineY);
+        drawTextWithRect(`${userData.age}`, 37, lineY, 32);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Date of Birth`, 61, lineY)
+          .text(`:`, 97, lineY);
+        drawTextWithRect(`${userData.dob}`, 99, lineY, 10);
+
+        lineY = getY(3);
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Height (cm)`, 10, lineY)
+          .text(`:`, 35, lineY);
+        drawTextWithRect(`${userData.height}`, 37, lineY, 15);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Dad Height (cm)`, 61, lineY)
+          .text(`:`, 97, lineY);
+        drawTextWithRect(`${userData.dadHeight}`, 99, lineY, 6);
+
+        lineY = getY(4);
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Gender`, 10, lineY)
+          .text(`:`, 35, lineY);
+        drawTextWithRect(`${userData.gender}`, 37, lineY, 15);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Mom Height (cm)`, 61, lineY)
+          .text(`:`, 97, lineY);
+        drawTextWithRect(`${userData.momHeight}`, 99, lineY, 15);
+
+        lineY = getY(5);
+        // pdf.setFillColor("#e6fcce");
+        // pdf.rect(10, lineY, 120, 100, "F");
+
+        // pdf.setFont(undefined, "bold").text("Growth Chart", 10, lineY);
+        pdf.addImage(chartDataUrl, "PNG", 10, lineY, 127, 116);
+
+        var watermark = new Image();
+        watermark.src = "resource/watermark.png";
+        pdf.addImage(watermark, "PNG", 25, 85, 107, 43);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text("Notes:", 10, 170)
+          .setFont(undefined, "normal")
+          .text(userData.notes, 10, 175, { maxWidth: 120 });
+        // pdf.rect(10, 77, 124, 130);
+
+        pdf.setFontSize(8);
+
+        lineY = 200;
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Address :`, 10, lineY)
+          .setFont(undefined, "normal")
+          .text("Jl. Kahuripan 7, Tegalsari, Surabaya", 24, lineY);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Phone :`, 72, lineY)
+          .setFont(undefined, "normal")
+          .text("081336437777", 84, lineY);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`E-Mail :`, 106, lineY)
+          .setFont(undefined, "normal")
+          .text("info@prospine.id", 117, lineY);
+
+        lineY = 205;
+        var imageLineY = lineY - 3;
+
+        var instagram = new Image();
+        instagram.src = "resource/instagram.png";
+        pdf.addImage(instagram, "PNG", 15, imageLineY, 4, 4);
+        pdf.setFont(undefined, "normal").text("prospine.clinic", 21, lineY);
+
+        var tiktok = new Image();
+        tiktok.src = "resource/tiktok.png";
+        pdf.addImage(tiktok, "PNG", 45, imageLineY, 4, 4);
+        pdf.setFont(undefined, "normal").text("prospine.clinic", 51, lineY);
+
+        var youtube = new Image();
+        youtube.src = "resource/youtube.png";
+        pdf.addImage(youtube, "PNG", 75, imageLineY, 4, 4);
+        pdf.setFont(undefined, "normal").text("Prospine Clinic", 81, lineY);
+
+        var website = new Image();
+        website.src = "resource/website.png";
+        pdf.addImage(website, "PNG", 105, imageLineY, 4, 4);
+        pdf.setFont(undefined, "normal").text("www.prospine.id", 111, lineY);
+
+        pdf.save("growth_taller.pdf");
+      }
+
+      document
+        .getElementById("resetZoom")
+        .addEventListener("click", function () {
+          if (window.myChart instanceof Chart) {
+            window.myChart.resetZoom();
+          }
+        });
+    </script>
+  </body>
+</html>

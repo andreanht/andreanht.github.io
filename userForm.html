@@ -53,6 +53,9 @@
           />
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-secondary" id="goBackButton">
+          Go Back
+        </button>
       </form>
     </div>
 
@@ -87,6 +90,7 @@
 
         $("#userForm").submit(function (event) {
           event.preventDefault();
+          console.log("dob val", $("#dateOfBirth").val());
 
           var formData = {
             name: $("#name").val(),
@@ -119,6 +123,10 @@
             },
           });
         });
+      });
+
+      $("#goBackButton").click(function () {
+        window.location.href = "index.html";
       });
     </script>
   </body>
