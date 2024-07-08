@@ -264,24 +264,6 @@
         document.getElementById("age").value = age;
       });
 
-      // function calculateAge(dob) {
-      //   const dobDate = new Date(dob);
-      //   const today = new Date();
-      //   var age = today.getFullYear() - dobDate.getFullYear();
-      //   const monthDiff = today.getMonth() - dobDate.getMonth();
-      //   console.log("age ", age);
-
-      //   if (
-      //     monthDiff < 0 ||
-      //     (monthDiff === 0 && today.getDate() < dobDate.getDate())
-      //   ) {
-      //     age--;
-      //     console.log("reduce age ", age);
-      //   }
-
-      //   return age;
-      // }
-
       $(document).ready(function () {
         var urlParams = new URLSearchParams(window.location.search);
         var userId = urlParams.get("id");
