@@ -42,7 +42,7 @@
       <div class="col-md-4">
         <img src="resource/logo.png" class="img-fluid" alt="Prospine" />
       </div>
-      <div class="col-md-4">
+      <div class="col-md-4 text-center">
         <h1>Growth Taller Form</h1>
       </div>
     </div>
@@ -216,6 +216,20 @@
             title: {
               display: true,
               text: "Age", // X-axis label
+            },
+            ticks: {
+              // For a category axis, the val is the index so the lookup via getLabelForValue is needed
+              callback: function (val, index) {
+                // Hide if label is date
+                var label = this.getLabelForValue(val);
+                console.log("ticks val", val);
+                console.log("ticks label val", label);
+                return label.length > 2
+                  ? ""
+                  : parseInt(this.getLabelForValue(val));
+              },
+              minRotation: 0,
+              maxRotation: 0,
             },
           },
           y: {
@@ -490,8 +504,8 @@
               console.log("age tally with year");
               dataProgress.push(heightProgress[j].height);
 
-              // labels.push(heightProgress[j].date);
-              labels.push("");
+              labels.push(heightProgress[j].date);
+              // labels.push("skip");
               data1.push("NaN");
               data2.push("NaN");
               data3.push("NaN");
