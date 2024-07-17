@@ -6,6 +6,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
 
@@ -52,10 +53,13 @@
     </table>
 
     <script>
+      // const host = "https://prospine.id:8443";
+      const host = "http://localhost:8585";
+
       $(document).ready(function () {
         $("#userTable").DataTable({
           ajax: {
-            url: "http://localhost:8585/userListOrderByName",
+            url: `${host}/userListOrderByName`,
             dataSrc: "",
           },
           columns: [
@@ -76,6 +80,7 @@
           ],
           pagingType: "simple_numbers",
           language: {
+            emptyTable: "No data available",
             paginate: {
               previous: "&laquo;",
               next: "&raquo;",
