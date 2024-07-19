@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
   <head>
     <link rel="icon" href="resource/icon.ico" />
-    <title>User Form</title>
+    <title>Client Form</title>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -15,6 +15,7 @@
 
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 
     <link
       href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css"
@@ -59,6 +60,7 @@
         <h3 id="formTitle">Add New Client</h3>
         <form id="inputForm" class="mb-4">
           <input type="hidden" id="userId" name="userId" />
+          <input type="hidden" id="userCreatedAt" name="userCreatedAt" />
           <div class="form-row">
             <div class="form-group col-md-8">
               <label for="name">Name :</label>
@@ -239,7 +241,7 @@
         </div>
       </div>
       <div id="userProgressList" class="mt-4 col-md-12">
-        <h2 class="mb-3">User Progress Data</h2>
+        <h2 class="mb-3">Client Progress Data</h2>
 
         <table
           id="userProgressTable"
@@ -331,6 +333,10 @@
         var urlParams = new URLSearchParams(window.location.search);
         var userId = urlParams.get("id");
 
+        document.getElementById("userCreatedAt").value = formatDate(new Date());
+        document.getElementById("lastProgressHeight").value = 0;
+        document.getElementById("lastProgressDate").value = null;
+
         const userProgress = document.getElementById("userProgress");
         const userLastProgress = document.getElementById("userLastProgress");
         const userProgressList = document.getElementById("userProgressList");
@@ -346,6 +352,7 @@
             data: { id: userId },
             success: async function (data) {
               $("#userId").val(data.id);
+              $("#userCreatedAt").val(formatDate(new Date(data.createdAt)));
               $("#name").val(data.name);
               $("#dob").val(data.dateOfBirth);
               $("#age").val(data.age);
@@ -406,6 +413,8 @@
                     "Success get latestProgressRecordById: ",
                     lastProgressData
                   );
+
+                  if (!lastProgressData) return;
 
                   document.getElementById("lastProgressHeight").value =
                     lastProgressData.height;
@@ -535,7 +544,6 @@
           })
             .then((response) => response.json())
             .then((data) => {
-              console.log("Success get user progress: ", data);
               for (var i = 0; i < data.length; i++) {
                 var progress = {
                   height: data[i].height,
@@ -668,7 +676,7 @@
           var userId = document.getElementById("userId").value;
           var name = document.getElementById("name").value;
           var phone = document.getElementById("phone").value;
-          var updatedHeight = parseInt(
+          var updatedHeight = parseFloat(
             document.getElementById("progressHeight").value
           );
           var dadHeight = document.getElementById("dadHeight").value;
@@ -774,8 +782,11 @@
 
       document
         .getElementById("saveToPDF")
-        .addEventListener("click", function () {
+        .addEventListener("click", async function () {
           // Get form data
+          var urlParams = new URLSearchParams(window.location.search);
+          var userId = urlParams.get("id");
+          var userCreatedAt = document.getElementById("userCreatedAt").value;
           var name = document.getElementById("name").value;
           var dob = document.getElementById("dob").value;
           var age = document.getElementById("age").value;
@@ -785,6 +796,13 @@
           var dadHeight = parseInt(document.getElementById("dadHeight").value);
           var momHeight = parseInt(document.getElementById("momHeight").value);
           var notes = document.getElementById("notes").value;
+          var lastProgressHeight =
+            document.getElementById("lastProgressHeight").value;
+          var lastProgressDate =
+            document.getElementById("lastProgressDate").value;
+
+          var lastHeight = lastProgressHeight > 0 ? lastProgressHeight : "-";
+          var lastHeightDate = lastProgressDate ? lastProgressDate : "-";
 
           if (!name || !dob || !phone || !dadHeight || !momHeight || !gender) {
             alert("Form fields can't be empty");
@@ -792,6 +810,7 @@
           }
 
           var userData = {
+            userCreatedAt,
             name,
             dob,
             age,
@@ -801,16 +820,41 @@
             dadHeight,
             momHeight,
             notes,
+            lastHeight,
+            lastHeightDate,
           };
+
+          var userProgressRows = [];
+
+          if (userId) {
+            await fetch(`${host}/userProgressById?userId=${userId}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => response.json())
+              .then((lastProgressData) => {
+                for (var i = 0; i < lastProgressData.length; i++) {
+                  var data = lastProgressData[i];
+                  console.log("data", data);
+                  var row = [i + 1, data.recordDate, data.height];
+                  userProgressRows.push(row);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          }
 
           // Get chart data
           let canvas = document.getElementById("myChart");
 
           // Generate PDF
-          generatePdf(userData, canvas);
+          generatePdf(userData, userProgressRows, canvas);
         });
 
-      function generatePdf(userData, canvas) {
+      function generatePdf(userData, userProgressRows, canvas) {
         var newCanvas = canvas.cloneNode(true);
         var ctx = newCanvas.getContext("2d");
 
@@ -833,14 +877,23 @@
           // pdf.rect(x, y, width, 7);
         }
 
-        var logo = new Image();
-        logo.src = "resource/logo.png";
-        pdf.addImage(logo, "PNG", 5, 4, 25, 10);
+        function printHeader() {
+          var logo = new Image();
+          logo.src = "resource/logo.png";
+          pdf.addImage(logo, "PNG", 5, 4, 25, 10);
 
-        pdf
-          .setFont(undefined, "bold")
-          .setFontSize(14)
-          .text("GROWTH TALLER RESULT", 40, 10);
+          pdf
+            .setFont(undefined, "bold")
+            .setFontSize(14)
+            .text("GROWTH TALLER RESULT", 40, 10);
+
+          pdf
+            .setFont(undefined, "normal")
+            .setFontSize(10)
+            .text(formatDate(new Date()), 120, 10);
+        }
+
+        printHeader();
 
         pdf.setFontSize(11);
 
@@ -855,47 +908,47 @@
         pdf
           .setFont(undefined, "bold")
           .text(`Name`, 10, lineY)
-          .text(`:`, 35, lineY);
-        drawTextWithRect(`${userData.name}`, 37, lineY, 62);
+          .text(`:`, 25, lineY);
+        drawTextWithRect(`${userData.name}`, 27, lineY, 62);
 
         lineY = getY(2);
         pdf
           .setFont(undefined, "bold")
-          .text(`Age`, 10, lineY)
-          .text(`:`, 35, lineY);
-        drawTextWithRect(`${userData.age}`, 37, lineY, 32);
+          .text(`Current Age`, 10, lineY)
+          .text(`:`, 53, lineY);
+        drawTextWithRect(`${userData.age}`, 55, lineY, 32);
 
         pdf
           .setFont(undefined, "bold")
-          .text(`Date of Birth`, 61, lineY)
-          .text(`:`, 97, lineY);
-        drawTextWithRect(`${userData.dob}`, 99, lineY, 10);
+          .text(`Date of Birth`, 69, lineY)
+          .text(`:`, 108, lineY);
+        drawTextWithRect(`${userData.dob}`, 110, lineY, 10);
 
         lineY = getY(3);
         pdf
           .setFont(undefined, "bold")
-          .text(`Height (cm)`, 10, lineY)
-          .text(`:`, 35, lineY);
-        drawTextWithRect(`${userData.height}`, 37, lineY, 15);
+          .text(`First Recorded Height`, 10, lineY)
+          .text(`:`, 53, lineY);
+        drawTextWithRect(`${userData.height}`, 55, lineY, 15);
 
         pdf
           .setFont(undefined, "bold")
-          .text(`Dad Height (cm)`, 61, lineY)
-          .text(`:`, 97, lineY);
-        drawTextWithRect(`${userData.dadHeight}`, 99, lineY, 6);
+          .text(`First Recorded Date`, 69, lineY)
+          .text(`:`, 108, lineY);
+        drawTextWithRect(`${userData.userCreatedAt}`, 110, lineY, 6);
 
         lineY = getY(4);
         pdf
           .setFont(undefined, "bold")
-          .text(`Gender`, 10, lineY)
-          .text(`:`, 35, lineY);
-        drawTextWithRect(`${userData.gender}`, 37, lineY, 15);
+          .text(`Last Recorded Height`, 10, lineY)
+          .text(`:`, 53, lineY);
+        drawTextWithRect(`${userData.lastHeight}`, 55, lineY, 15);
 
         pdf
           .setFont(undefined, "bold")
-          .text(`Mom Height (cm)`, 61, lineY)
-          .text(`:`, 97, lineY);
-        drawTextWithRect(`${userData.momHeight}`, 99, lineY, 15);
+          .text(`Last Recorded Date`, 69, lineY)
+          .text(`:`, 108, lineY);
+        drawTextWithRect(`${userData.lastHeightDate}`, 110, lineY, 15);
 
         lineY = getY(5);
         // pdf.setFillColor("#e6fcce");
@@ -915,49 +968,81 @@
           .text(userData.notes, 10, 175, { maxWidth: 120 });
         // pdf.rect(10, 77, 124, 130);
 
-        pdf.setFontSize(8);
+        function printFooter() {
+          pdf.setFontSize(8);
 
-        lineY = 200;
-        pdf
-          .setFont(undefined, "bold")
-          .text(`Address :`, 10, lineY)
-          .setFont(undefined, "normal")
-          .text("Jl. Kahuripan 7, Tegalsari, Surabaya", 24, lineY);
+          lineY = 200;
+          pdf
+            .setFont(undefined, "bold")
+            .text(`Address :`, 10, lineY)
+            .setFont(undefined, "normal")
+            .text("Jl. Kahuripan 7, Tegalsari, Surabaya", 24, lineY);
 
-        pdf
-          .setFont(undefined, "bold")
-          .text(`Phone :`, 72, lineY)
-          .setFont(undefined, "normal")
-          .text("081336437777", 84, lineY);
+          pdf
+            .setFont(undefined, "bold")
+            .text(`Phone :`, 72, lineY)
+            .setFont(undefined, "normal")
+            .text("081336437777", 84, lineY);
 
-        pdf
-          .setFont(undefined, "bold")
-          .text(`E-Mail :`, 106, lineY)
-          .setFont(undefined, "normal")
-          .text("info@prospine.id", 117, lineY);
+          pdf
+            .setFont(undefined, "bold")
+            .text(`E-Mail :`, 106, lineY)
+            .setFont(undefined, "normal")
+            .text("info@prospine.id", 117, lineY);
 
-        lineY = 205;
-        var imageLineY = lineY - 3;
+          lineY = 205;
+          var imageLineY = lineY - 3;
 
-        var instagram = new Image();
-        instagram.src = "resource/instagram.png";
-        pdf.addImage(instagram, "PNG", 15, imageLineY, 4, 4);
-        pdf.setFont(undefined, "normal").text("prospine.clinic", 21, lineY);
+          var instagram = new Image();
+          instagram.src = "resource/instagram.png";
+          pdf.addImage(instagram, "PNG", 15, imageLineY, 4, 4);
+          pdf.setFont(undefined, "normal").text("prospine.clinic", 21, lineY);
 
-        var tiktok = new Image();
-        tiktok.src = "resource/tiktok.png";
-        pdf.addImage(tiktok, "PNG", 45, imageLineY, 4, 4);
-        pdf.setFont(undefined, "normal").text("prospine.clinic", 51, lineY);
+          var tiktok = new Image();
+          tiktok.src = "resource/tiktok.png";
+          pdf.addImage(tiktok, "PNG", 45, imageLineY, 4, 4);
+          pdf.setFont(undefined, "normal").text("prospine.clinic", 51, lineY);
 
-        var youtube = new Image();
-        youtube.src = "resource/youtube.png";
-        pdf.addImage(youtube, "PNG", 75, imageLineY, 4, 4);
-        pdf.setFont(undefined, "normal").text("Prospine Clinic", 81, lineY);
+          var youtube = new Image();
+          youtube.src = "resource/youtube.png";
+          pdf.addImage(youtube, "PNG", 75, imageLineY, 4, 4);
+          pdf.setFont(undefined, "normal").text("Prospine Clinic", 81, lineY);
 
-        var website = new Image();
-        website.src = "resource/website.png";
-        pdf.addImage(website, "PNG", 105, imageLineY, 4, 4);
-        pdf.setFont(undefined, "normal").text("www.prospine.id", 111, lineY);
+          var website = new Image();
+          website.src = "resource/website.png";
+          pdf.addImage(website, "PNG", 105, imageLineY, 4, 4);
+          pdf.setFont(undefined, "normal").text("www.prospine.id", 111, lineY);
+        }
+
+        printFooter();
+
+        if (userProgressRows.length > 0) {
+          pdf.addPage();
+
+          //TODO: Record History
+          var columns = ["No.", "Record Date", "Height"];
+          pdf.autoTable({
+            head: [columns],
+            body: userProgressRows,
+            didDrawPage: function (data) {
+              printHeader();
+              pdf
+                .setFont(undefined, "bold")
+                .setFontSize(12)
+                .text(
+                  "Record History",
+                  pdf.internal.pageSize.getWidth() / 2,
+                  25,
+                  { align: "center" }
+                );
+              printFooter();
+            },
+            margin: {
+              top: 30,
+              bottom: 15,
+            },
+          });
+        }
 
         pdf.save("growth_taller.pdf");
       }
