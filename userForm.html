@@ -9,13 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
-    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
 
     <link
       href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.css"
@@ -266,19 +268,19 @@
       const chartOptions = {
         scales: {
           x: {
+            type: "time",
+            time: {
+              unit: "year",
+              tooltipFormat: "dd MMM yyyy",
+            },
             title: {
               display: true,
-              text: "Age", // X-axis label
+              text: "Year",
             },
             ticks: {
-              // For a category axis, the val is the index so the lookup via getLabelForValue is needed
-              callback: function (val, index) {
-                // Hide if label is date
-                var label = this.getLabelForValue(val);
-                return label.length > 2
-                  ? ""
-                  : parseInt(this.getLabelForValue(val));
-              },
+              // callback: function (val, index) {
+              //   var label = this.getLabelForValue(val);
+              // },
               minRotation: 0,
               maxRotation: 0,
             },
@@ -527,6 +529,23 @@
           await generateChart();
         });
 
+      function getBirtdays(dobString) {
+        var dob = new Date(dobString);
+        var year = dob.getFullYear();
+
+        var birthdays = [];
+
+        for (var age = 2; age <= 20; age++) {
+          var birthday = new Date(dob);
+          birthday.setFullYear(year + age);
+          birthday.setMonth(0);
+          birthday.setDate(1);
+          birthdays.push(birthday.toISOString().split("T")[0]);
+        }
+
+        return birthdays;
+      }
+
       async function updateChart(
         ages,
         heightDataMin,
@@ -534,7 +553,22 @@
         heightDataMax
       ) {
         var heightProgress = [];
+        var heightProg = [];
         var userId = $("#userId").val();
+
+        var initialHeight = document.getElementById("height").value;
+        var dob = document.getElementById("dob").value;
+        var age = document.getElementById("age").value;
+        var firstProgressYear =
+          heightProgress.length > 0
+            ? new Date(heightProgress[0].date).getFullYear()
+            : 0;
+
+        heightProg.push({
+          x: formatDate(new Date()),
+          y: initialHeight,
+        });
+
         if (userId) {
           await fetch(`${host}/userProgressById?userId=${userId}`, {
             method: "GET",
@@ -550,6 +584,11 @@
                   date: data[i].recordDate,
                 };
                 heightProgress.push(progress);
+
+                heightProg.push({
+                  x: data[i].recordDate,
+                  y: data[i].height,
+                });
               }
             })
             .catch((error) => {
@@ -558,61 +597,75 @@
         }
         console.log("heightProgress: ", heightProgress);
 
-        var initialHeight = document.getElementById("height").value;
-        var dob = document.getElementById("dob").value;
-        var age = document.getElementById("age").value;
-        var firstProgressYear =
-          heightProgress.length > 0
-            ? new Date(heightProgress[0].date).getFullYear()
-            : 0;
+        // var labels = [];
+        // var data1 = [];
+        // var data2 = [];
+        // var data3 = [];
+        // var dataProgress = [];
+        var progressPoint = heightProg.length > 1 ? false : true;
 
-        var labels = [];
-        var data1 = [];
-        var data2 = [];
-        var data3 = [];
-        var dataProgress = [];
-        var progressPoint = true;
+        // for (var i = 0; i < heightDataMin.length; i++) {
+        //   labels.push(ages[i]);
+        //   data1.push(heightDataMin[i]);
+        //   data2.push(heightDataAvg[i]);
+        //   data3.push(heightDataMax[i]);
 
-        for (var i = 0; i < heightDataMin.length; i++) {
-          labels.push(ages[i]);
-          data1.push(heightDataMin[i]);
-          data2.push(heightDataAvg[i]);
-          data3.push(heightDataMax[i]);
+        //   if (Number(ages[i]) == Number(age)) {
+        //     dataProgress.push(initialHeight);
+        //     console.log("initial height", initialHeight);
+        //   } else {
+        //     dataProgress.push("NaN");
+        //   }
 
-          if (Number(ages[i]) == Number(age)) {
-            dataProgress.push(initialHeight);
-            console.log("initial height", initialHeight);
-          } else {
-            dataProgress.push("NaN");
-          }
+        //   for (var j = 0; j < heightProgress.length; j++) {
+        //     var progressYear = new Date(heightProgress[j].date).getFullYear();
+        //     var yearDiff = progressYear - firstProgressYear;
+        //     var progressAge = yearDiff + Number(age);
 
-          for (var j = 0; j < heightProgress.length; j++) {
-            var progressYear = new Date(heightProgress[j].date).getFullYear();
-            var yearDiff = progressYear - firstProgressYear;
-            var progressAge = yearDiff + Number(age);
+        //     if (Number(ages[i]) === progressAge) {
+        //       console.log("age tally with year");
+        //       dataProgress.push(heightProgress[j].height);
 
-            if (Number(ages[i]) === progressAge) {
-              console.log("age tally with year");
-              dataProgress.push(heightProgress[j].height);
+        //       labels.push(heightProgress[j].date);
+        //       // labels.push("skip");
+        //       data1.push("NaN");
+        //       data2.push("NaN");
+        //       data3.push("NaN");
 
-              labels.push(heightProgress[j].date);
-              // labels.push("skip");
-              data1.push("NaN");
-              data2.push("NaN");
-              data3.push("NaN");
+        //       progressPoint = false;
+        //     }
+        //   }
+        // }
+        // console.log("dataProgress", dataProgress);
 
-              progressPoint = false;
-            }
-          }
+        var dataMin = [];
+        var dataAvg = [];
+        var dataMax = [];
+
+        var birthdays = getBirtdays(dob);
+
+        for (var i = 0; i < birthdays.length; i++) {
+          dataMin.push({
+            x: birthdays[i],
+            y: heightDataMin[i],
+          });
+
+          dataAvg.push({
+            x: birthdays[i],
+            y: heightDataAvg[i],
+          });
+
+          dataMax.push({
+            x: birthdays[i],
+            y: heightDataMax[i],
+          });
         }
-        console.log("dataProgress", dataProgress);
 
         var data = {
-          labels: labels,
           datasets: [
             {
               label: "Min",
-              data: data1,
+              data: dataMin,
               backgroundColor: "rgba(54, 162, 235, 0.2)",
               borderColor: "rgba(54, 162, 235, 1)",
               borderWidth: 1,
@@ -621,7 +674,7 @@
             },
             {
               label: "Avg",
-              data: data2,
+              data: dataAvg,
               backgroundColor: "rgba(204, 153, 255, 0.2)",
               borderColor: "rgba(204, 153, 255, 1)",
               borderWidth: 1,
@@ -630,7 +683,7 @@
             },
             {
               label: "Max",
-              data: data3,
+              data: dataMax,
               backgroundColor: "rgba(75, 192, 192, 0.2)",
               borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 1,
@@ -639,7 +692,7 @@
             },
             {
               label: "Height",
-              data: dataProgress,
+              data: heightProg,
               backgroundColor: "rgba(255, 99, 132, 0.2)",
               borderColor: "rgba(255, 99, 132, 1)",
               borderWidth: 2,
