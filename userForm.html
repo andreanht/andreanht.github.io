@@ -180,7 +180,7 @@
             ></textarea>
           </div>
 
-          <button type="submit" class="btn btn-primary" id="saveClientButton">
+          <button type="button" class="btn btn-primary" id="saveClientButton">
             Save Client Data
           </button>
           <button type="button" class="btn btn-secondary" id="goBackButton">
@@ -307,11 +307,11 @@
             },
           },
         },
-        elements: {
-          line: {
-            tension: 0.4,
-          },
-        },
+        // elements: {
+        //   line: {
+        //     tension: 0.4,
+        //   },
+        // },
         devicePixelRatio: 2,
       };
 
@@ -671,6 +671,7 @@
               borderWidth: 1,
               spanGaps: true,
               pointStyle: false,
+              tension: 0.4,
             },
             {
               label: "Avg",
@@ -680,6 +681,7 @@
               borderWidth: 1,
               spanGaps: true,
               pointStyle: false,
+              tension: 0.4,
             },
             {
               label: "Max",
@@ -689,6 +691,7 @@
               borderWidth: 1,
               spanGaps: true,
               pointStyle: false,
+              tension: 0.4,
             },
             {
               label: "Height",
@@ -698,6 +701,7 @@
               borderWidth: 2,
               spanGaps: true,
               pointStyle: progressPoint,
+              tension: 0.2,
             },
           ],
         };
@@ -796,27 +800,27 @@
 
           await updateChart(ages, heightDataMin, heightDataAvg, heightDataMax);
 
-          await fetch(`${host}/latestProgressRecordById?userId=${userId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-            .then((response) => response.json())
-            .then((lastProgressData) => {
-              console.log(
-                "Success get latestProgressRecordById: ",
-                lastProgressData
-              );
+          // await fetch(`${host}/latestProgressRecordById?userId=${userId}`, {
+          //   method: "GET",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //   },
+          // })
+          //   .then((response) => response.json())
+          //   .then((lastProgressData) => {
+          //     console.log(
+          //       "Success get latestProgressRecordById: ",
+          //       lastProgressData
+          //     );
 
-              document.getElementById("lastProgressHeight").value =
-                lastProgressData.height;
-              document.getElementById("lastProgressDate").value =
-                lastProgressData.recordDate;
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-            });
+          //     document.getElementById("lastProgressHeight").value =
+          //       lastProgressData.height;
+          //     document.getElementById("lastProgressDate").value =
+          //       lastProgressData.recordDate;
+          //   })
+          //   .catch((error) => {
+          //     console.error("Error:", error);
+          //   });
 
           await loadProgressListTable();
         });
@@ -849,10 +853,28 @@
           var dadHeight = parseInt(document.getElementById("dadHeight").value);
           var momHeight = parseInt(document.getElementById("momHeight").value);
           var notes = document.getElementById("notes").value;
-          var lastProgressHeight =
-            document.getElementById("lastProgressHeight").value;
-          var lastProgressDate =
-            document.getElementById("lastProgressDate").value;
+          var lastProgressHeight;
+          var lastProgressDate;
+
+          await fetch(`${host}/latestProgressRecordById?userId=${userId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((lastProgressData) => {
+              console.log(
+                "Success get latestProgressRecordById: ",
+                lastProgressData
+              );
+
+              lastProgressHeight = lastProgressData.height;
+              lastProgressDate = lastProgressData.recordDate;
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
 
           var lastHeight = lastProgressHeight > 0 ? lastProgressHeight : "-";
           var lastHeightDate = lastProgressDate ? lastProgressDate : "-";
