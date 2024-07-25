@@ -4,9 +4,11 @@
     <link rel="icon" href="resource/icon.ico" />
     <title>User List</title>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    
+
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
 
@@ -44,6 +46,8 @@
           <th>Name</th>
           <th>Date of Birth</th>
           <th>Phone</th>
+          <th>Created At</th>
+          <th>Updated At</th>
           <th>Edit</th>
         </tr>
       </thead>
@@ -53,8 +57,12 @@
     </table>
 
     <script>
-      // const host = "https://prospine.id:8443";
-      const host = "http://localhost:8585";
+      const host = "https://prospine.id:8443";
+      // const host = "http://localhost:8585";
+
+      function formatDate(dateString) {
+        return moment(dateString).format("YYYY-MM-DD HH:mm:ss");
+      }
 
       $(document).ready(function () {
         $("#userTable").DataTable({
@@ -66,6 +74,18 @@
             { data: "name" },
             { data: "dateOfBirth" },
             { data: "phone" },
+            {
+              data: "createdAt",
+              render: function (data, type, row) {
+                return formatDate(data);
+              },
+            },
+            {
+              data: "updatedAt",
+              render: function (data, type, row) {
+                return formatDate(data);
+              },
+            },
             {
               data: null,
               render: function (data, type, row) {
