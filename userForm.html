@@ -87,7 +87,7 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-4">
               <label for="phone">Phone No. :</label>
               <input
                 type="number"
@@ -106,7 +106,7 @@
                 <option value="F">Female</option>
               </select>
             </div>
-            <div class="form-group col-md-3">
+            <div class="form-group col-md-2">
               <label for="height">Age :</label>
               <input
                 type="number"
@@ -117,6 +117,13 @@
                 max="999"
                 disabled
               />
+            </div>
+            <div class="form-group col-md-3">
+              <label for="branch">Branch :</label>
+              <select class="form-control" id="branch" name="branch" required>
+                <option value="Tangerang">Tangerang</option>
+                <option value="Surabaya">Surabaya</option>
+              </select>
             </div>
           </div>
           <div class="form-row">
@@ -355,6 +362,7 @@
             success: async function (data) {
               $("#userId").val(data.id);
               $("#userCreatedAt").val(formatDate(new Date(data.createdAt)));
+              $("#branch").val(data.branch);
               $("#name").val(data.name);
               $("#dob").val(data.dateOfBirth);
               $("#age").val(data.age);
@@ -446,6 +454,7 @@
           console.log("dob here", dob);
 
           var formData = {
+            branch: $("#branch").val(),
             name: $("#name").val(),
             dateOfBirth: dob,
             age: $("#age").val(),
@@ -844,6 +853,7 @@
           var urlParams = new URLSearchParams(window.location.search);
           var userId = urlParams.get("id");
           var userCreatedAt = document.getElementById("userCreatedAt").value;
+          var branch = document.getElementById("branch").value;
           var name = document.getElementById("name").value;
           var dob = document.getElementById("dob").value;
           var age = document.getElementById("age").value;
@@ -886,6 +896,7 @@
 
           var userData = {
             userCreatedAt,
+            branch,
             name,
             dob,
             age,
@@ -983,8 +994,19 @@
         pdf
           .setFont(undefined, "bold")
           .text(`Name`, 10, lineY)
-          .text(`:`, 25, lineY);
-        drawTextWithRect(`${userData.name}`, 27, lineY, 62);
+          .text(`:`, 22, lineY);
+        drawTextWithRect(`${userData.name}`, 24, lineY, 62);
+
+        var half = pdf.internal.pageSize.getWidth() / 2;
+        var colonRight = half + 39;
+        var textRight = colonRight + 2;
+        console.log("half", half);
+
+        pdf
+          .setFont(undefined, "bold")
+          .text(`Branch`, half, lineY)
+          .text(`:`, colonRight, lineY);
+        drawTextWithRect(`${userData.branch}`, textRight, lineY, 62);
 
         lineY = getY(2);
         pdf
@@ -995,9 +1017,9 @@
 
         pdf
           .setFont(undefined, "bold")
-          .text(`Date of Birth`, 69, lineY)
-          .text(`:`, 108, lineY);
-        drawTextWithRect(`${userData.dob}`, 110, lineY, 10);
+          .text(`Date of Birth`, half, lineY)
+          .text(`:`, colonRight , lineY);
+        drawTextWithRect(`${userData.dob}`, textRight, lineY, 10);
 
         lineY = getY(3);
         pdf
@@ -1008,9 +1030,9 @@
 
         pdf
           .setFont(undefined, "bold")
-          .text(`First Recorded Date`, 69, lineY)
-          .text(`:`, 108, lineY);
-        drawTextWithRect(`${userData.userCreatedAt}`, 110, lineY, 6);
+          .text(`First Recorded Date`, half, lineY)
+          .text(`:`, colonRight, lineY);
+        drawTextWithRect(`${userData.userCreatedAt}`, textRight, lineY, 6);
 
         lineY = getY(4);
         pdf
@@ -1021,9 +1043,9 @@
 
         pdf
           .setFont(undefined, "bold")
-          .text(`Last Recorded Date`, 69, lineY)
-          .text(`:`, 108, lineY);
-        drawTextWithRect(`${userData.lastHeightDate}`, 110, lineY, 15);
+          .text(`Last Recorded Date`, half, lineY)
+          .text(`:`, colonRight, lineY);
+        drawTextWithRect(`${userData.lastHeightDate}`, textRight, lineY, 15);
 
         lineY = getY(5);
         // pdf.setFillColor("#e6fcce");
@@ -1049,21 +1071,21 @@
           lineY = 200;
           pdf
             .setFont(undefined, "bold")
-            .text(`Address :`, 10, lineY)
+            .text(`Phone (Tangerang) :`, 8, lineY)
             .setFont(undefined, "normal")
-            .text("Jl. Kahuripan 7, Tegalsari, Surabaya", 24, lineY);
+            .text("0812-9567-2727", 36, lineY);
 
           pdf
             .setFont(undefined, "bold")
-            .text(`Phone :`, 72, lineY)
+            .text(`Phone (Surabaya) :`, 59, lineY)
             .setFont(undefined, "normal")
-            .text("081336437777", 84, lineY);
+            .text("0813-3643-7777", 85, lineY);
 
           pdf
             .setFont(undefined, "bold")
-            .text(`E-Mail :`, 106, lineY)
+            .text(`E-Mail :`, 108, lineY)
             .setFont(undefined, "normal")
-            .text("info@prospine.id", 117, lineY);
+            .text("info@prospine.id", 119, lineY);
 
           lineY = 205;
           var imageLineY = lineY - 3;
