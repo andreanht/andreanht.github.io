@@ -187,7 +187,7 @@
             ></textarea>
           </div>
 
-          <button type="button" class="btn btn-primary" id="saveClientButton">
+          <button type="submit" class="btn btn-primary" id="saveClientButton">
             Save Client Data
           </button>
           <button type="button" class="btn btn-secondary" id="goBackButton">
@@ -314,33 +314,35 @@
             },
           },
         },
-        // elements: {
-        //   line: {
-        //     tension: 0.4,
-        //   },
-        // },
         devicePixelRatio: 2,
       };
 
-      document.getElementById("dob").addEventListener("change", function () {
-        const dob = new Date(this.value);
-        const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-
-        if (
-          monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < dob.getDate())
-        ) {
-          age--;
+      $(document).on("keydown", ":input:not(textarea)", function (event) {
+        if (event.key == "Enter") {
+          event.preventDefault();
         }
-
-        document.getElementById("age").value = age;
       });
 
       $(document).ready(function () {
+        document.getElementById("dob").addEventListener("change", function () {
+          const dob = new Date(this.value);
+          const today = new Date();
+          let age = today.getFullYear() - dob.getFullYear();
+          const monthDiff = today.getMonth() - dob.getMonth();
+
+          if (
+            monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < dob.getDate())
+          ) {
+            age--;
+          }
+
+          document.getElementById("age").value = age;
+        });
+
         var urlParams = new URLSearchParams(window.location.search);
         var userId = urlParams.get("id");
+        console.log("userId param", userId);
 
         document.getElementById("userCreatedAt").value = formatDate(new Date());
         document.getElementById("lastProgressHeight").value = 0;
@@ -352,6 +354,7 @@
         if (userId) {
           // Edit user scenario
           $("#formTitle").text("Edit Client");
+          $("#saveClientButton").text("Update Client Data");
           document.getElementById("progressDate").valueAsDate = new Date();
 
           // Fetch the user details and populate the form
@@ -447,8 +450,9 @@
           userProgressList.style.display = "none";
         }
 
-        $("#saveClientButton").click(function (event) {
+        function handleSaveClient(event) {
           event.preventDefault();
+          console.log("event", event);
           console.log("submit here");
           var dob = $("#dob").val();
           console.log("dob here", dob);
@@ -466,25 +470,63 @@
             notes: $("#notes").val(),
           };
 
-          var ajaxUrl = userId
-            ? `${host}/submitFormData/${userId}`
-            : `${host}/submitFormData`;
-          var ajaxMethod = userId ? "PUT" : "POST";
-
           $.ajax({
-            type: ajaxMethod,
-            url: ajaxUrl,
-            data: JSON.stringify(formData),
+            type: "POST",
+            url: `${host}/userExistsByNameAndPhone`,
+            data: JSON.stringify({
+              name: formData.name,
+              phone: formData.phone,
+            }),
             contentType: "application/json",
-            success: function () {
-              alert("User " + (userId ? "updated" : "added") + " successfully");
-              //   window.location.href = "index.html";
+            success: function (result) {
+              console.log("duplicate result", result);
+
+              if (result) {
+                alert(
+                  "A user with the same name and phone number already exists."
+                );
+                return;
+              }
+
+              var ajaxUrl = userId
+                ? `${host}/submitFormData/${userId}`
+                : `${host}/submitFormData`;
+              var ajaxMethod = userId ? "PUT" : "POST";
+
+              $.ajax({
+                type: ajaxMethod,
+                url: ajaxUrl,
+                data: JSON.stringify(formData),
+                contentType: "application/json",
+                success: function (result) {
+                  console.log("result save", result);
+                  alert(
+                    "User " + (userId ? "updated" : "added") + " successfully"
+                  );
+
+                  if (!userId && ajaxMethod === "POST") {
+                    window.location.href = "userForm.html?id=" + result;
+                  }
+                },
+                error: function () {
+                  alert(
+                    "Error " + (userId ? "updating" : "adding") + " client"
+                  );
+                },
+              });
             },
             error: function () {
-              alert("Error " + (userId ? "updating" : "adding") + " client");
+              alert("Error checking for duplicate user.");
             },
           });
-        });
+        }
+
+        const userForm = document.getElementById("userForm");
+        userForm.addEventListener("submit", handleSaveClient);
+
+        // $("#saveClientButton").keydown(function (event) {
+        //   event.preventDefault();
+        // });
       });
 
       $("#goBackButton").click(function () {
@@ -606,46 +648,7 @@
         }
         console.log("heightProgress: ", heightProgress);
 
-        // var labels = [];
-        // var data1 = [];
-        // var data2 = [];
-        // var data3 = [];
-        // var dataProgress = [];
         var progressPoint = heightProg.length > 1 ? false : true;
-
-        // for (var i = 0; i < heightDataMin.length; i++) {
-        //   labels.push(ages[i]);
-        //   data1.push(heightDataMin[i]);
-        //   data2.push(heightDataAvg[i]);
-        //   data3.push(heightDataMax[i]);
-
-        //   if (Number(ages[i]) == Number(age)) {
-        //     dataProgress.push(initialHeight);
-        //     console.log("initial height", initialHeight);
-        //   } else {
-        //     dataProgress.push("NaN");
-        //   }
-
-        //   for (var j = 0; j < heightProgress.length; j++) {
-        //     var progressYear = new Date(heightProgress[j].date).getFullYear();
-        //     var yearDiff = progressYear - firstProgressYear;
-        //     var progressAge = yearDiff + Number(age);
-
-        //     if (Number(ages[i]) === progressAge) {
-        //       console.log("age tally with year");
-        //       dataProgress.push(heightProgress[j].height);
-
-        //       labels.push(heightProgress[j].date);
-        //       // labels.push("skip");
-        //       data1.push("NaN");
-        //       data2.push("NaN");
-        //       data3.push("NaN");
-
-        //       progressPoint = false;
-        //     }
-        //   }
-        // }
-        // console.log("dataProgress", dataProgress);
 
         var dataMin = [];
         var dataAvg = [];
@@ -879,6 +882,8 @@
                 lastProgressData
               );
 
+              if (!lastProgressData) return;
+
               lastProgressHeight = lastProgressData.height;
               lastProgressDate = lastProgressData.recordDate;
             })
@@ -1018,7 +1023,7 @@
         pdf
           .setFont(undefined, "bold")
           .text(`Date of Birth`, half, lineY)
-          .text(`:`, colonRight , lineY);
+          .text(`:`, colonRight, lineY);
         drawTextWithRect(`${userData.dob}`, textRight, lineY, 10);
 
         lineY = getY(3);
