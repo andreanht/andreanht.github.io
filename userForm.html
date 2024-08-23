@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.js"></script>
@@ -241,7 +242,7 @@
         <div>
           <label for="chart">Potential Growth</label>
         </div>
-        <div class="border p-3">
+        <div class="border p-1">
           <canvas id="myChart" width="400" height="400"></canvas>
         </div>
         <div class="mt-3">
@@ -301,6 +302,18 @@
           },
         },
         plugins: {
+          datalabels: {
+            font: {
+              lineHeight: 1.5,
+              weight: 'bold',
+            },
+            formatter: function (value, context) {
+              if (context.dataIndex === context.dataset.data.length - 1) {
+                return '\n' + value.y + '      ';
+              }
+              return "";
+            },
+          },
           zoom: {
             pan: {
               enabled: true,
@@ -589,8 +602,8 @@
         for (var age = 2; age <= 20; age++) {
           var birthday = new Date(dob);
           birthday.setFullYear(year + age);
-          birthday.setMonth(0);
-          birthday.setDate(1);
+          // birthday.setMonth(0);
+          // birthday.setDate(1);
           birthdays.push(birthday.toISOString().split("T")[0]);
         }
 
@@ -728,6 +741,7 @@
         window.myChart = new Chart(chartCtx, {
           type: "line",
           data: data,
+          plugins: [ChartDataLabels],
           options: chartOptions,
         });
       }
