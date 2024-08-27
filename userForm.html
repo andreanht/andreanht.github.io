@@ -494,7 +494,7 @@
             success: function (result) {
               console.log("duplicate result", result);
 
-              if (result) {
+              if (!userId && result) {
                 alert(
                   "A user with the same name and phone number already exists."
                 );
