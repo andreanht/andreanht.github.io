@@ -137,6 +137,7 @@
                 class="form-control"
                 min="1"
                 max="999"
+                step=".01"
                 required
               />
             </div>
@@ -149,6 +150,7 @@
                 class="form-control"
                 min="1"
                 max="999"
+                step=".01"
                 required
               />
             </div>
@@ -161,6 +163,7 @@
                 class="form-control"
                 min="1"
                 max="999"
+                step=".01"
                 required
               />
             </div>
@@ -305,11 +308,11 @@
           datalabels: {
             font: {
               lineHeight: 1.5,
-              weight: 'bold',
+              weight: "bold",
             },
             formatter: function (value, context) {
               if (context.dataIndex === context.dataset.data.length - 1) {
-                return '\n' + value.y + '      ';
+                return "\n" + value.y + "      ";
               }
               return "";
             },
@@ -394,6 +397,9 @@
               var heightDataAvg = [];
               var heightDataMax = [];
 
+              console.log(
+                `calculate dadHeight: ${data.dadHeight} momHeight: ${data.momHeight} gender: ${data.gender}`
+              );
               await fetch(
                 `${host}/calculateGrowth?dadHeight=${data.dadHeight}&momHeight=${data.momHeight}&gender=${data.gender}`,
                 {
@@ -551,8 +557,8 @@
         var dob = document.getElementById("dob").value;
         var age = document.getElementById("age").value;
         var gender = document.getElementById("gender").value;
-        var dadHeight = parseInt(document.getElementById("dadHeight").value);
-        var momHeight = parseInt(document.getElementById("momHeight").value);
+        var dadHeight = document.getElementById("dadHeight").value;
+        var momHeight = document.getElementById("momHeight").value;
 
         var ages = [];
         var heightDataMin = [];
@@ -560,6 +566,9 @@
         var heightDataMax = [];
         var initialHeightData = [];
 
+        console.log(
+          `calculate dadHeight: ${dadHeight} momHeight: ${momHeight} gender: ${gender}`
+        );
         await fetch(
           `${host}/calculateGrowth?dadHeight=${dadHeight}&momHeight=${momHeight}&gender=${gender}`,
           {
@@ -875,10 +884,10 @@
           var dob = document.getElementById("dob").value;
           var age = document.getElementById("age").value;
           var phone = document.getElementById("phone").value;
-          var height = parseInt(document.getElementById("height").value);
+          var height = document.getElementById("height").value;
           var gender = document.getElementById("gender").value;
-          var dadHeight = parseInt(document.getElementById("dadHeight").value);
-          var momHeight = parseInt(document.getElementById("momHeight").value);
+          var dadHeight = document.getElementById("dadHeight").value;
+          var momHeight = document.getElementById("momHeight").value;
           var notes = document.getElementById("notes").value;
           var lastProgressHeight;
           var lastProgressDate;
