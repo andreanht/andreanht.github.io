@@ -525,6 +525,8 @@
 
                   if (!userId && ajaxMethod === "POST") {
                     window.location.href = "userForm.html?id=" + result;
+                  } else {
+                    location.reload();
                   }
                 },
                 error: function () {
