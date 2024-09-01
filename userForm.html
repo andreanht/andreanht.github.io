@@ -639,8 +639,9 @@
             ? new Date(heightProgress[0].date).getFullYear()
             : 0;
 
+        var userCreatedAt = document.getElementById("userCreatedAt").value;
         heightProg.push({
-          x: formatDate(new Date()),
+          x: formatDate(userCreatedAt),
           y: initialHeight,
         });
 
