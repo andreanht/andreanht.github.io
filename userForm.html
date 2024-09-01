@@ -248,8 +248,30 @@
         <div class="border p-1">
           <canvas id="myChart" width="400" height="400"></canvas>
         </div>
+        <div id="graphDate" class="mt-3">
+          <h6 id="graphDateTitle">Chart Date</h6>
+          <form id="graphDateForm" class="form-inline mb-2">
+            <label for="graphDateFrom">From :</label>
+            <input
+              type="date"
+              id="graphDateFrom"
+              class="form-control mx-2"
+              required
+            />
+            <label for="graphDateTo">To :</label>
+            <input
+              type="date"
+              id="graphDateTo"
+              class="form-control mx-2"
+              required
+            />
+            <button type="button" id="graphDateUpdate" class="btn btn-primary">
+              Update
+            </button>
+          </form>
+        </div>
         <div class="mt-3">
-          <button id="resetZoom" class="btn btn-secondary">Reset Zoom</button>
+          <button id="resetZoom" class="btn btn-secondary">Reset Chart</button>
           <button id="saveToPDF" class="btn btn-primary">Save to PDF</button>
         </div>
       </div>
@@ -554,7 +576,7 @@
         window.location.href = "index.html";
       });
 
-      async function generateChart() {
+      async function generateChart(resetGraphDate = true) {
         var height = document.getElementById("height").value;
         var dob = document.getElementById("dob").value;
         var age = document.getElementById("age").value;
@@ -594,6 +616,10 @@
             console.error("Error:", error);
           });
 
+        if (resetGraphDate) {
+          setInitialGraphDateFromTo(dob, ages.length - 1);
+        }
+
         await updateChart(ages, heightDataMin, heightDataAvg, heightDataMax);
       }
 
@@ -602,6 +628,13 @@
         .addEventListener("click", async function (event) {
           event.preventDefault();
           await generateChart();
+        });
+
+      document
+        .getElementById("graphDateUpdate")
+        .addEventListener("click", async function (event) {
+          event.preventDefault();
+          await generateChart(false);
         });
 
       function getBirtdays(dobString) {
@@ -621,6 +654,24 @@
         return birthdays;
       }
 
+      function setInitialGraphDateFromTo(dob, length) {
+        const graphDateFrom = new Date(dob);
+        graphDateFrom.setFullYear(graphDateFrom.getFullYear() + 2);
+        const dateFromFormat = graphDateFrom.toISOString().split("T")[0];
+        console.log("dateFromFormat", dateFromFormat);
+        document.getElementById("graphDateFrom").value = dateFromFormat;
+
+        const graphDateTo = new Date(graphDateFrom);
+        graphDateTo.setFullYear(graphDateTo.getFullYear() + length);
+        const dateToFormat = graphDateTo.toISOString().split("T")[0];
+        console.log("dateToFormat", dateToFormat);
+        document.getElementById("graphDateTo").value = dateToFormat;
+      }
+
+      function isDateInRange(date, start, end) {
+        return date >= start && date <= end;
+      }
+
       async function updateChart(
         ages,
         heightDataMin,
@@ -634,10 +685,20 @@
         var initialHeight = document.getElementById("height").value;
         var dob = document.getElementById("dob").value;
         var age = document.getElementById("age").value;
-        var firstProgressYear =
-          heightProgress.length > 0
-            ? new Date(heightProgress[0].date).getFullYear()
-            : 0;
+
+        var graphDateFrom = document.getElementById("graphDateFrom").value;
+        var graphDateTo = document.getElementById("graphDateTo").value;
+
+        console.log("graphDateFrom", graphDateFrom, "graphDateTo", graphDateTo);
+        if (!graphDateFrom || !graphDateTo) {
+          setInitialGraphDateFromTo(dob, ages.length - 1);
+          graphDateFrom = document.getElementById("graphDateFrom").value;
+          graphDateTo = document.getElementById("graphDateTo").value;
+        }
+
+        var chartFrom = new Date(graphDateFrom);
+        var chartTo = new Date(graphDateTo);
+        console.log("chartFrom", chartFrom, "chartTo", chartTo);
 
         var userCreatedAt = document.getElementById("userCreatedAt").value;
         heightProg.push({
@@ -655,12 +716,6 @@
             .then((response) => response.json())
             .then((data) => {
               for (var i = 0; i < data.length; i++) {
-                var progress = {
-                  height: data[i].height,
-                  date: data[i].recordDate,
-                };
-                heightProgress.push(progress);
-
                 heightProg.push({
                   x: data[i].recordDate,
                   y: data[i].height,
@@ -671,9 +726,15 @@
               console.error("Error:", error);
             });
         }
-        console.log("heightProgress: ", heightProgress);
+        console.log("heightProg: ", heightProg);
 
-        var progressPoint = heightProg.length > 1 ? false : true;
+        for (var i = 0; i < heightProg.length; i++) {
+          if (isDateInRange(new Date(heightProg[i].x), chartFrom, chartTo)) {
+            heightProgress.push(heightProg[i]);
+          }
+        }
+
+        var progressPoint = heightProgress.length > 1 ? false : true;
 
         var dataMin = [];
         var dataAvg = [];
@@ -682,20 +743,22 @@
         var birthdays = getBirtdays(dob);
 
         for (var i = 0; i < birthdays.length; i++) {
-          dataMin.push({
-            x: birthdays[i],
-            y: heightDataMin[i],
-          });
+          if (isDateInRange(new Date(birthdays[i]), chartFrom, chartTo)) {
+            dataMin.push({
+              x: birthdays[i],
+              y: heightDataMin[i],
+            });
 
-          dataAvg.push({
-            x: birthdays[i],
-            y: heightDataAvg[i],
-          });
+            dataAvg.push({
+              x: birthdays[i],
+              y: heightDataAvg[i],
+            });
 
-          dataMax.push({
-            x: birthdays[i],
-            y: heightDataMax[i],
-          });
+            dataMax.push({
+              x: birthdays[i],
+              y: heightDataMax[i],
+            });
+          }
         }
 
         var data = {
@@ -732,7 +795,7 @@
             },
             {
               label: "Height",
-              data: heightProg,
+              data: heightProgress,
               backgroundColor: "rgba(255, 99, 132, 0.2)",
               borderColor: "rgba(255, 99, 132, 1)",
               borderWidth: 2,
@@ -1177,10 +1240,12 @@
 
       document
         .getElementById("resetZoom")
-        .addEventListener("click", function () {
-          if (window.myChart instanceof Chart) {
-            window.myChart.resetZoom();
-          }
+        .addEventListener("click", async function () {
+          event.preventDefault();
+          await generateChart();
+          // if (window.myChart instanceof Chart) {
+          //   window.myChart.resetZoom();
+          // }
         });
 
       async function loadProgressListTable() {
